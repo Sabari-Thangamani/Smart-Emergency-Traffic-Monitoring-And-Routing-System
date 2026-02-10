@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Emergency Traffic Management System</title>
+
+  <!-- Leaflet (OpenStreetMap) - no backend, no Google Maps -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Header: title + ambulance icon + emergency mode indicator -->
+  <header class="topbar">
+    <div class="topbar__left">
+      <div class="brand">
+        <div class="brand__icon" aria-hidden="true">
+          <!-- Simple ambulance icon (SVG) -->
+          <svg width="28" height="18" viewBox="0 0 56 36" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="12" width="34" height="16" rx="3" fill="#ffffff" stroke="#b91c1c" stroke-width="3" />
+            <rect x="35" y="16" width="16" height="12" rx="3" fill="#ffffff" stroke="#b91c1c" stroke-width="3" />
+            <rect x="38" y="18" width="7" height="6" fill="#dbeafe" stroke="#93c5fd" stroke-width="2" />
+            <circle cx="16" cy="30" r="5" fill="#111" />
+            <circle cx="42" cy="30" r="5" fill="#111" />
+            <rect x="18" y="18" width="10" height="5" fill="#b91c1c" />
+            <rect x="22" y="15" width="3" height="11" fill="#b91c1c" />
+          </svg>
+        </div>
+        <div>
+          <div class="brand__title">Smart Emergency Traffic Management System</div>
+          <div class="brand__subtitle">Ambulance Driver Dashboard (Frontend Prototype)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="topbar__right">
+      <div class="emergency">
+        <div class="emergency__label">Emergency Mode</div>
+        <div id="emergencyPill" class="pill pill--off">OFF</div>
+        <button id="toggleEmergencyBtn" class="btn btn--danger" type="button">Turn ON</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="dashboard">
+    <!-- Left column: driver info + route selection + ML prediction + route options -->
+    <section class="col">
+      <!-- Driver info card -->
+      <div class="card">
+        <div class="card__header">
+          <h2 class="card__title">Driver Information</h2>
+          <div class="card__note">Static demo values (editable in code)</div>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <div class="field__label">Driver Name</div>
+            <div id="driverName" class="field__value">Arun Kumar</div>
+          </div>
+          <div class="field">
+            <div class="field__label">Ambulance ID</div>
+            <div id="ambulanceId" class="field__value">TN-AMB-014</div>
+          </div>
+          <div class="field">
+            <div class="field__label">Hospital</div>
+            <div id="hospitalName" class="field__value">Govt. General Hospital, Chennai</div>
+          </div>
+          <div class="field">
+            <div class="field__label">Emergency Type</div>
+            <div id="emergencyType" class="field__value">Road Accident</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Route selection -->
+      <div class="card">
+        <div class="card__header">
+          <h2 class="card__title">Emergency Route Selection</h2>
+          <div class="card__note">Choose accident location and destination</div>
+        </div>
+
+        <div class="form-row">
+          <label class="input">
+            <span class="input__label">Accident Location</span>
+            <select id="accidentSelect" class="input__control">
+              <option value="guindy">Guindy</option>
+              <option value="tnagar">T. Nagar</option>
+              <option value="egmore">Egmore</option>
+              <option value="central">Chennai Central</option>
+            </select>
+          </label>
+
+          <label class="input">
+            <span class="input__label">Destination Hospital</span>
+            <select id="hospitalSelect" class="input__control">
+              <option value="ggh">Govt. General Hospital</option>
+              <option value="apollo">Apollo Hospitals</option>
+              <option value="miot">MIOT International</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="actions">
+          <button id="suggestRouteBtn" class="btn" type="button">Suggest Low Traffic Route</button>
+          <button id="resetBtn" class="btn btn--secondary" type="button">Reset</button>
+        </div>
+        <div class="hint">
+          ML is simulated using time + past data idea (DBMS). No real model is used here.
+        </div>
+      </div>
+
+      <!-- ML prediction (simulated) -->
+      <div class="card">
+        <div class="card__header">
+          <h2 class="card__title">ML Traffic Prediction (Simulated)</h2>
+          <div class="card__note">Based on time and past data</div>
+        </div>
+
+        <div class="prediction">
+          <div class="prediction__left">
+            <div class="muted">Predicted Traffic Level</div>
+            <div id="predictedTraffic" class="prediction__value">—</div>
+          </div>
+          <div id="predictionBadge" class="badge badge--neutral">No prediction yet</div>
+        </div>
+      </div>
+
+      <!-- Route suggestion panel -->
+      <div class="card">
+        <div class="card__header">
+          <h2 class="card__title">Route Suggestion</h2>
+          <div class="card__note">3 options (demo)</div>
+        </div>
+
+        <div id="routes" class="routes">
+          <!-- Routes filled by JavaScript -->
+        </div>
+
+        <div class="actions">
+          <button id="startDriveBtn" class="btn btn--primary" type="button" disabled>Start Emergency Drive</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right column: map + drive status -->
+    <section class="col">
+      <div class="card card--map">
+        <div class="card__header">
+          <h2 class="card__title">Live Map (Tamil Nadu - Karur)</h2>
+          <div class="card__note">OpenStreetMap + Leaflet</div>
+        </div>
+        <div id="map" class="map" aria-label="City map"></div>
+        <div class="legend">
+          <div class="legend__item"><span class="dot dot--amb"></span> Ambulance</div>
+          <div class="legend__item"><span class="dot dot--sig"></span> Traffic Signal</div>
+          <div class="legend__item"><span class="line"></span> Selected Route</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__header">
+          <h2 class="card__title">Emergency Drive Status</h2>
+          <div class="card__note">Automatic control is simulated</div>
+        </div>
+
+        <div class="grid-2">
+          <div class="field">
+            <div class="field__label">Auto Traffic Signal Control</div>
+            <div id="autoControl" class="field__value">OFF</div>
+          </div>
+          <div class="field">
+            <div class="field__label">Distance to Next Signal</div>
+            <div id="distanceToSignal" class="field__value">—</div>
+          </div>
+          <div class="field">
+            <div class="field__label">Signal Override Status</div>
+            <div class="field__value">
+              <div id="signalId" class="signal-id">—</div>
+              <div id="signalMode" class="signal-state">Normal Traffic Mode</div>
+              <div id="signalList" class="signal-list" aria-label="All traffic signals"></div>
+            </div>
+          </div>
+          <div class="field">
+            <div class="field__label">Override Trigger</div>
+            <div id="advanceDetection" class="field__value">Inactive</div>
+          </div>
+        </div>
+
+        <div class="message">
+          Automatic traffic signal control activates when ambulance is within <b>3 km</b> of a signal.
+        </div>
+      </div>
+
+      <!-- Small event log panel (timestamps) -->
+      <div class="card">
+        <div class="card__header">
+          <h2 class="card__title">Event Log</h2>
+          <div class="card__note">System events with timestamps</div>
+        </div>
+        <div id="eventLog" class="log" aria-live="polite"></div>
+      </div>
+    </section>
+  </main>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script src="script.js"></script>
+</body>
+</html>
